@@ -2,58 +2,226 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FireLam Chat</title>
 <style>
-  :root { color-scheme: dark; }
-  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0f1115; color: #e6e6e6; margin: 0; }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
-  h1 { font-size: 20px; font-weight: 600; }
-  #key-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-  #key-bar input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #333; background: #1a1d23; color: #e6e6e6; }
-  #messages { display: flex; flex-direction: column; gap: 10px; min-height: 320px; margin-bottom: 16px; }
-  .msg { padding: 10px 14px; border-radius: 10px; max-width: 85%; white-space: pre-wrap; line-height: 1.4; }
-  .user { align-self: flex-end; background: #2b5cff; color: white; }
-  .assistant { align-self: flex-start; background: #1a1d23; border: 1px solid #2a2d34; }
-  .system { align-self: center; color: #888; font-size: 13px; }
-  #input-bar { display: flex; gap: 8px; }
-  #input-bar textarea { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d23; color: #e6e6e6; resize: vertical; min-height: 44px; }
-  button { padding: 10px 16px; border-radius: 8px; border: none; background: #2b5cff; color: white; cursor: pointer; font-weight: 600; }
-  button:disabled { opacity: 0.5; cursor: default; }
-  .model-tag { color: #777; font-size: 12px; }
+  :root {
+    color-scheme: dark;
+    --bg: #0e1013;
+    --bg-elevated: #17191d;
+    --border: #2a2d34;
+    --text: #e8e8e8;
+    --text-dim: #8a8d94;
+    --accent: #ff6a1a;
+    --bubble-user: #232629;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+  .brand { font-weight: 600; font-size: 15px; letter-spacing: 0.2px; display: flex; align-items: center; gap: 8px; }
+  .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .model-tag { color: var(--text-dim); font-size: 12px; font-weight: 400; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--bg-elevated); color: var(--text-dim); display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 15px;
+  }
+  .icon-btn:hover { color: var(--text); border-color: #444; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    width: 100%;
+    padding: 0 20px;
+  }
+  #empty-state h1 { font-size: 28px; font-weight: 500; color: #cfd1d6; margin: 0; }
+
+  #messages {
+    flex: 1;
+    width: 100%;
+    max-width: 760px;
+    overflow-y: auto;
+    padding: 20px 20px 140px;
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+  }
+  #messages.visible { display: flex; }
+
+  .msg { max-width: 88%; line-height: 1.55; font-size: 15px; white-space: pre-wrap; }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--bubble-user);
+    padding: 10px 16px;
+    border-radius: 16px;
+  }
+  .msg.assistant { align-self: flex-start; padding: 2px 2px; }
+  .msg.system { align-self: center; color: var(--text-dim); font-size: 13px; }
+
+  .input-dock {
+    width: 100%;
+    max-width: 720px;
+    padding: 0 20px;
+    flex-shrink: 0;
+  }
+  .input-dock.docked {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .input-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 8px 10px 8px 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+  .input-pill textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    max-height: 160px;
+    padding: 6px 0;
+  }
+  .input-pill textarea::placeholder { color: var(--text-dim); }
+
+  .pill-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: none; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: transparent; color: var(--text-dim); font-size: 16px;
+  }
+  .pill-btn:hover { color: var(--text); background: #232629; }
+  .pill-btn.send { background: var(--accent); color: #1a0f08; }
+  .pill-btn.send:hover { background: #ff7c33; color: #1a0f08; }
+  .pill-btn.send:disabled { background: #4a3826; color: #7a6a5a; cursor: default; }
+
+  .hint { text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 10px; }
+
+  #settings-panel {
+    display: none;
+    position: absolute;
+    top: 56px;
+    right: 20px;
+    width: 300px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    z-index: 20;
+  }
+  #settings-panel.open { display: block; }
+  #settings-panel label { font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  #settings-panel input {
+    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: #0e1013; color: var(--text); font-size: 13px; margin-bottom: 10px;
+  }
+  #settings-panel button {
+    width: 100%; padding: 8px; border-radius: 8px; border: none; background: var(--accent);
+    color: #1a0f08; font-weight: 600; cursor: pointer; font-size: 13px;
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>FireLam Chat <span class="model-tag">({{ model_name }})</span></h1>
 
-  <div id="key-bar">
-    <input id="api-key" type="password" placeholder="Enter your API key">
-    <button id="save-key">Save</button>
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> FireLam <span class="model-tag">{{ model_name }}</span></div>
+  <button class="icon-btn" id="settings-toggle" title="API key settings">⚙</button>
+</div>
+
+<div id="settings-panel">
+  <label for="api-key">API key</label>
+  <input id="api-key" type="password" placeholder="fl-xxxxxxxxxxxxxxxx">
+  <button id="save-key">Save</button>
+</div>
+
+<main>
+  <div id="empty-state">
+    <h1>Ready when you are.</h1>
+    <div class="input-dock" id="input-dock">
+      <div class="input-pill">
+        <button class="pill-btn" title="Attach (not yet enabled)">+</button>
+        <textarea id="input" placeholder="Ask FireLam anything" rows="1"></textarea>
+        <button class="pill-btn send" id="send" title="Send">➤</button>
+      </div>
+      <div class="hint">FireLam can make mistakes. Verify important code and facts.</div>
+    </div>
   </div>
 
   <div id="messages"></div>
-
-  <div id="input-bar">
-    <textarea id="input" placeholder="Ask FireLam anything..." rows="2"></textarea>
-    <button id="send">Send</button>
-  </div>
-</div>
+</main>
 
 <script>
 const messagesEl = document.getElementById('messages');
+const emptyStateEl = document.getElementById('empty-state');
+const inputDock = document.getElementById('input-dock');
 const inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const apiKeyEl = document.getElementById('api-key');
-const saveKeyBtn = document.getElementById('save-key');
+const settingsToggle = document.getElementById('settings-toggle');
+const settingsPanel = document.getElementById('settings-panel');
 
 let history = [];
+let started = false;
 
 apiKeyEl.value = localStorage.getItem('firelam_api_key') || '';
 
-saveKeyBtn.onclick = () => {
+settingsToggle.onclick = () => settingsPanel.classList.toggle('open');
+document.getElementById('save-key').onclick = () => {
   localStorage.setItem('firelam_api_key', apiKeyEl.value.trim());
-  addSystemMsg('API key saved locally in this browser.');
+  settingsPanel.classList.remove('open');
 };
+
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + 'px';
+});
+
+function beginConversation() {
+  if (started) return;
+  started = true;
+  emptyStateEl.style.display = 'none';
+  messagesEl.classList.add('visible');
+  document.querySelector('main').appendChild(inputDock);
+  inputDock.classList.add('docked');
+}
 
 function addMsg(role, content) {
   const div = document.createElement('div');
@@ -63,22 +231,17 @@ function addMsg(role, content) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function addSystemMsg(text) {
-  const div = document.createElement('div');
-  div.className = 'msg system';
-  div.textContent = text;
-  messagesEl.appendChild(div);
-}
-
 async function send() {
   const text = inputEl.value.trim();
   const apiKey = apiKeyEl.value.trim();
   if (!text) return;
-  if (!apiKey) { addSystemMsg('Enter your API key above first.'); return; }
+  if (!apiKey) { settingsPanel.classList.add('open'); return; }
 
+  beginConversation();
   addMsg('user', text);
   history.push({ role: 'user', content: text });
   inputEl.value = '';
+  inputEl.style.height = 'auto';
   sendBtn.disabled = true;
 
   try {
@@ -89,15 +252,16 @@ async function send() {
     });
     const data = await resp.json();
     if (!resp.ok) {
-      addSystemMsg('Error: ' + (data.detail || resp.statusText));
+      addMsg('system', 'Error: ' + (data.detail || resp.statusText));
     } else {
       addMsg('assistant', data.reply);
       history.push({ role: 'assistant', content: data.reply });
     }
   } catch (e) {
-    addSystemMsg('Network error: ' + e.message);
+    addMsg('system', 'Network error: ' + e.message);
   } finally {
     sendBtn.disabled = false;
+    inputEl.focus();
   }
 }
 
