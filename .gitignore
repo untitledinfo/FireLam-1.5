@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+outputs/
+third_party/
+*.gguf
+*.safetensors
+*.bin
+.env
+wandb/
+.DS_Store
+
+# admin panel secrets/runtime data
+admin_panel/.env
+admin_panel/data/api_keys.json
+admin_panel/.venv/

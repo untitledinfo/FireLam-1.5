@@ -1,0 +1,22 @@
+# LoRA / QLoRA adapter configuration
+use_qlora: true              # 4-bit quantized base + LoRA adapters (fits on smaller GPUs)
+r: 16                        # LoRA rank — raise to 32/64 for more capacity (more VRAM)
+lora_alpha: 32
+lora_dropout: 0.05
+bias: "none"
+task_type: "CAUSAL_LM"
+
+# Which layers to adapt — attention + MLP projections covers most quality gain
+target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# 4-bit quantization settings (used when use_qlora: true)
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_quant_type: "nf4"
+bnb_4bit_use_double_quant: true

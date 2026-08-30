@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lightweight deps (no torch — CI doesn't train)
+        run: pip install pyyaml ruff
+
+      - name: Lint
+        run: ruff check src/ data/*.py
+
+      - name: Validate sample dataset
+        run: python data/validate_dataset.py --path data/sample_dataset.jsonl
+
+      - name: Validate YAML configs parse
+        run: |
+          python -c "
+          import yaml
+          for f in ['configs/model_config.yaml', 'configs/lora_config.yaml', 'configs/training_config.yaml']:
+              yaml.safe_load(open(f))
+              print(f, 'OK')
+          "

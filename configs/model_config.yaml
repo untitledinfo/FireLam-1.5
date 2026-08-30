@@ -1,0 +1,21 @@
+# Base model + identity settings for FireLam 1.5
+model_name: "FireLam-1.5"
+version: "1.5-beta"
+
+# Swap this to change base model/size. Must be a causal LM on Hugging Face Hub.
+base_model: "Qwen/Qwen2.5-Coder-7B-Instruct"
+
+# Alternative bases (uncomment one to switch):
+# base_model: "Qwen/Qwen2.5-Coder-3B-Instruct"
+# base_model: "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+# base_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+# base_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"   # requires accepting Meta license on HF
+
+trust_remote_code: false
+max_seq_length: 4096
+chat_template: "chatml"   # or "llama3", "auto" (uses tokenizer's own template)
+
+system_prompt: >
+  You are FireLam, an AI assistant specialized in coding, debugging, reasoning,
+  and mathematics, built and fine-tuned by the FireLam project. Be direct,
+  technically precise, and show your work on multi-step problems.

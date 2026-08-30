@@ -1,0 +1,26 @@
+# Reverse proxy for the FireLam admin panel + chat API.
+# __DOMAIN__ is replaced by install.sh with your actual domain (sed, not envsubst,
+# to avoid clobbering nginx's own $host / $remote_addr variables below).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 300s;
+    }
+}
+
+# After this file is installed, run:
+#   sudo certbot --nginx -d __DOMAIN__
+# Certbot will edit this file in place to add the SSL server block (443) and
+# an HTTP -> HTTPS redirect. Don't hand-add SSL directives here yourself.

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FireLam Admin</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0f1115; color: #e6e6e6; margin: 0; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 20px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid #2a2d34; font-size: 14px; }
+  th { color: #999; font-weight: 500; }
+  .revoked { color: #e05555; }
+  .active { color: #4caf7d; }
+  form.create { display: flex; gap: 8px; margin-top: 20px; }
+  input[type=text] { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #333; background: #1a1d23; color: #e6e6e6; }
+  button { padding: 8px 14px; border-radius: 6px; border: none; background: #2b5cff; color: white; cursor: pointer; font-weight: 600; }
+  button.revoke { background: #442; color: #e05555; }
+  #new-key-box { margin-top: 16px; padding: 12px; border: 1px solid #2b5cff; border-radius: 8px; display: none; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FireLam — API Keys</h1>
+
+  <form class="create" id="create-form">
+    <input type="text" id="key-name" placeholder="Key name (e.g. 'discord bot', 'my laptop')" required>
+    <button type="submit">Create key</button>
+  </form>
+
+  <div id="new-key-box"></div>
+
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Prefix</th><th>Created</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for k in keys %}
+      <tr id="row-{{ k.id }}">
+        <td>{{ k.name }}</td>
+        <td><code>{{ k.prefix }}</code></td>
+        <td>{{ k.created }}</td>
+        <td class="{{ 'revoked' if k.revoked else 'active' }}">{{ 'Revoked' if k.revoked else 'Active' }}</td>
+        <td>
+          {% if not k.revoked %}
+          <button class="revoke" onclick="revokeKey('{{ k.id }}')">Revoke</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.getElementById('create-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('key-name').value.trim();
+  const resp = await fetch('/admin/keys', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'name=' + encodeURIComponent(name),
+  });
+  const data = await resp.json();
+  const box = document.getElementById('new-key-box');
+  box.style.display = 'block';
+  box.innerHTML = '<strong>New key:</strong> <code>' + data.api_key + '</code><br><span style="color:#e0a555">' + data.warning + '</span>';
+  setTimeout(() => location.reload(), 4000);
+});
+
+async function revokeKey(keyId) {
+  if (!confirm('Revoke this key? Anything using it will stop working immediately.')) return;
+  await fetch('/admin/keys/' + keyId + '/revoke', { method: 'POST' });
+  location.reload();
+}
+</script>
+</body>
+</html>
