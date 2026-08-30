@@ -1,0 +1,43 @@
+# FireLam Panel — nginx + PHP-FPM site
+# Copy to /etc/nginx/sites-available/firelam-panel, edit SERVER_NAME and
+# PHP_SOCK, then: ln -s /etc/nginx/sites-available/firelam-panel /etc/nginx/sites-enabled/
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name SERVER_NAME;
+
+    root /var/www/firelam-panel/public;
+    index index.php;
+
+    access_log /var/log/nginx/firelam-panel.access.log;
+    error_log  /var/log/nginx/firelam-panel.error.log;
+
+    # Never serve app internals directly.
+    location ~ ^/(includes|storage|schema\.sql|\.env)(/|$) {
+        deny all;
+        return 404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:PHP_SOCK;
+        fastcgi_read_timeout 300;       # chat replies can take a while to stream
+        fastcgi_buffering off;          # required so SSE chunks aren't buffered
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    client_max_body_size 2m;
+}
+
+# --- After DNS points at this server, get HTTPS with:
+#   sudo apt install certbot python3-certbot-nginx
+#   sudo certbot --nginx -d SERVER_NAME
