@@ -34,12 +34,11 @@ def validate_line(obj: dict, line_no: int) -> list[str]:
         if not content or not content.strip():
             errors.append(f"line {line_no}, msg {i}: empty content")
 
-        if i >= expect_start:
-            if role == prev_role and role != "system":
-                errors.append(
-                    f"line {line_no}, msg {i}: role '{role}' repeats consecutively "
-                    "(expected alternating user/assistant)"
-                )
+        if i >= expect_start and role == prev_role and role != "system":
+            errors.append(
+                f"line {line_no}, msg {i}: role '{role}' repeats consecutively "
+                "(expected alternating user/assistant)"
+            )
         prev_role = role
 
     if messages[-1]["role"] != "assistant":

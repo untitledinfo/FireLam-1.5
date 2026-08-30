@@ -13,7 +13,6 @@ Requires: pip install lm-eval (already in requirements.txt). Coding benchmarks
 execution sandboxing — see docs/TRAINING.md for setup.
 """
 import argparse
-import json
 import subprocess
 import sys
 from datetime import datetime, timezone
